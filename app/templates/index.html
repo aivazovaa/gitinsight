@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitInsight</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/animate.css"></script>
+    <style>
+        body {
+            background-color: #CBDFEA;
+            color: #4B3935;
+            font-family: 'Arial', sans-serif;
+        }
+        .container {
+            text-align: center;
+            margin-top: 50px;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+        }
+        input[type="text"] {
+            padding: 10px;
+            font-size: 16px;
+            width: 60%;
+            margin-right: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4B3935;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #CBDFEA;
+            color: #4B3935;
+        }
+        .user-card {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+        .user-card img {
+            border-radius: 50%;
+            width: 100px;
+            height: 100px;
+        }
+        .repo-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .repo-list li {
+            background-color: #ffffff;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+        .repo-list li:hover {
+            transform: scale(1.02);
+            background-color: #f1f1f1;
+        }
+        .repo-list a {
+            color: #4B3935;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .repo-list .meta {
+            font-size: 0.9rem;
+            color: #888;
+        }
+        .repo-details {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+        .repo-details.show {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        .repo-card {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .repo-card h4 {
+            margin-bottom: 10px;
+        }
+        .repo-card p {
+            color: #4B3935;
+            font-size: 14px;
+        }
+        .chart-container {
+            width: 80%;
+            margin: 30px auto;
+        }
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #4B3935;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        .readme-content {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 5px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .details-btn {
+            margin-top: 10px;
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+        .chart-row {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        .chart-wrapper {
+            width: 48%;
+            min-width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 GitHub User Insight</h1>
+        <form id="searchForm">
+            <input type="text" id="username" placeholder="Enter GitHub username" required>
+            <button type="submit">Search</button>
+        </form>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById("searchForm");
+        const resultDiv = document.getElementById("result");
+
+        form.addEventListener("submit", async function (e) {
+            e.preventDefault();
+            const username = document.getElementById("username").value;
+            resultDiv.innerHTML = "<div class='loading-spinner'></div>";
+
+            try {
+                // Fetch user data
+                const userResponse = await fetch(`/api/user/${username}`);
+                if (!userResponse.ok) {
+                    resultDiv.innerHTML = "<p>User not found</p>";
+                    return;
+                }
+                const userData = await userResponse.json();
+
+                // Fetch READMEs for each repository
+                const reposWithReadme = await Promise.all(userData.repositories.map(async repo => {
+                    try {
+                        const readmeResponse = await fetch(`/api/repo/${username}/${repo.name}/readme`);
+                        if (readmeResponse.ok) {
+                            const readmeData = await readmeResponse.json();
+                            return { ...repo, readme: readmeData.readme };
+                        }
+                        return { ...repo, readme: null };
+                    } catch (error) {
+                        return { ...repo, readme: null };
+                    }
+                }));
+
+                // Calculate language statistics
+                const languageStats = {};
+                reposWithReadme.forEach(repo => {
+                    if (repo.language) {
+                        languageStats[repo.language] = (languageStats[repo.language] || 0) + 1;
+                    }
+                });
+
+                // Render the page
+                resultDiv.innerHTML = `
+                    <div class="user-card animate__animated animate__fadeIn">
+                        <img src="${userData.avatar_url}" alt="${userData.username}'s avatar">
+                        <h2>${userData.username}</h2>
+                        <p>📦 Public Repos: ${userData.public_repos}</p>
+                        <p>👥 Followers: ${userData.followers}</p>
+                    </div>
+                    <h3>Repositories</h3>
+                    <ul class="repo-list">
+                        ${reposWithReadme.map(repo => `
+                            <li class="repo-card">
+                                <a href="${repo.url}" target="_blank">${repo.name}</a>
+                                <span class="meta">⭐ ${repo.stars} | 🍴 ${repo.forks} | 🧠 ${repo.language || 'Unknown'}</span>
+                                <button class="details-btn" onclick="toggleRepoDetails(this)">Details</button>
+                                <div class="repo-details">
+                                    <p><strong>Description:</strong> ${repo.description || 'No description'}</p>
+                                    <p><strong>Language:</strong> ${repo.language || 'Unknown'}</p>
+                                    <p><a href="${repo.url}" target="_blank" rel="noopener noreferrer">Go to Repository</a></p>
+                                    ${repo.readme ? `
+                                    <div>
+                                        <h5>README:</h5>
+                                        <div class="readme-content">${repo.readme}</div>
+                                    </div>
+                                    ` : '<p>No README available</p>'}
+                                </div>
+                            </li>`).join("")}
+                    </ul>
+                    <div class="chart-row">
+                        <div class="chart-wrapper">
+                            <h4>Repository Stars & Forks</h4>
+                            <div class="chart-container">
+                                <canvas id="repoChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-wrapper">
+                            <h4>Languages Used</h4>
+                            <div class="chart-container">
+                                <canvas id="languageChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Draw the chart for repository stars and forks
+                const repoNames = reposWithReadme.map(repo => repo.name);
+                const repoStars = reposWithReadme.map(repo => repo.stars);
+                const repoForks = reposWithReadme.map(repo => repo.forks);
+
+                var repoCtx = document.getElementById('repoChart').getContext('2d');
+                new Chart(repoCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: repoNames,
+                        datasets: [{
+                            label: 'Stars',
+                            data: repoStars,
+                            backgroundColor: '#4B3935',
+                            borderColor: '#4B3935',
+                            borderWidth: 1
+                        }, {
+                            label: 'Forks',
+                            data: repoForks,
+                            backgroundColor: '#CBDFEA',
+                            borderColor: '#CBDFEA',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+
+                // Draw the chart for languages
+                const languages = Object.keys(languageStats);
+                const languageCounts = Object.values(languageStats);
+
+                var langCtx = document.getElementById('languageChart').getContext('2d');
+                new Chart(langCtx, {
+                    type: 'pie',
+                    data: {
+                        labels: languages,
+                        datasets: [{
+                            data: languageCounts,
+                            backgroundColor: [
+                                '#4B3935',
+                                '#CBDFEA',
+                                '#A5C4D4',
+                                '#8B9FA5',
+                                '#7A8B8B',
+                                '#6B7D7D',
+                                '#5C6F6F'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'right'
+                            }
+                        }
+                    }
+                });
+
+            } catch (error) {
+                console.error("Error:", error);
+                resultDiv.innerHTML = "<p>An error occurred while fetching data</p>";
+            }
+        });
+
+        function toggleRepoDetails(button) {
+            const detailsDiv = button.nextElementSibling;
+            detailsDiv.classList.toggle('show');
+            
+            // Update button text
+            button.textContent = detailsDiv.classList.contains('show') ? 'Hide Details' : 'Details';
+        }
+    </script>
+</body>
+</html>

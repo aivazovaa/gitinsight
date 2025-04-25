@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.log
+
+# Virtualenv
+venv/
+env/
+
+# Byte-compiled
+*.pyc
+
+# SQLite / Postgres files
+*.db
+
+# Flask
+instance/
+*.env
+
+# VS Code
+.vscode/
+
+# Docker
+*.pid
+*.sock
+*.pid.lock
+Dockerfile
+docker-compose.override.yml
+
+# System
+.DS_Store
+
