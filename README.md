@@ -28,7 +28,9 @@
 - **Requests** — Python library for making HTTP calls to GitHub's API
 
 ### Templating and UI
+
 - **HTML5 / CSS3** — for markup and styling
+- Mako — Python templating engine used for generating dynamic HTML content server-side
 
 ### Deployment
 - **Docker / Docker Compose** — containerized setup for local development and deployment
