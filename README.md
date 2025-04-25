@@ -28,13 +28,14 @@
 - **Requests** — Python library for making HTTP calls to GitHub's API
 
 ### Templating and UI
-
+- **Mako** — Python templating engine used for generating dynamic HTML content server-side
 - **HTML5 / CSS3** — for markup and styling
-- Mako — Python templating engine used for generating dynamic HTML content server-side
 
 ### Deployment
 - **Docker / Docker Compose** — containerized setup for local development and deployment
 - **Render** — used for live cloud hosting
+
+> Note: No JavaScript or frontend charting libraries are currently used. All analytics and visual representations are handled on the server and rendered as static HTML.
 
 ---
 
@@ -69,14 +70,14 @@ GITHUB_TOKEN=your_github_token_here
 python app.py
 ```
 
-The application will be accessible at: [http://localhost:5000](http://localhost:5000)
+The application will be accessible at: [http://localhost:5000](http://localhost:5001)
 
 ---
 
 ## Usage
 
 1. Visit the app in your browser.
-2. Enter a GitHub username.
+2. Enter a GitHub username (e.g., `torvalds`, `aivazovaa`).
 3. Click the "Search" button.
 4. View detailed analytics:
    - User profile info
@@ -93,7 +94,7 @@ To run GitInsight in a Docker container:
 docker-compose up --build
 ```
 
-This will start the service at [http://localhost:5000](http://localhost:5000)
+This will start the service at [http://localhost:5000](http://localhost:5001)
 
 ---
 
@@ -119,4 +120,6 @@ gitinsight/
 - Improved error handling and loading states
 - GitHub OAuth authentication
 - Data caching to reduce API usage
-- Metrics for pull requests, issues, stars, and forks
+- Metrics for pull requests, issues
+
+
