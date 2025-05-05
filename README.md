@@ -35,8 +35,6 @@
 - **Docker / Docker Compose** — containerized setup for local development and deployment
 - **Render** — used for live cloud hosting
 
-> Note: No JavaScript or frontend charting libraries are currently used. All analytics and visual representations are handled on the server and rendered as static HTML.
-
 ---
 
 ## Installation & Setup
