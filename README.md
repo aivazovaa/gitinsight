@@ -54,15 +54,8 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 3. Configure environment variables
 
-Create a `.env` file in the root directory and add your GitHub personal access token (optional but recommended):
-
-```env
-GITHUB_TOKEN=your_github_token_here
-```
-
-### 4. Run the server
+### 3. Run the server
 
 ```bash
 python app.py
