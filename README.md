@@ -8,14 +8,14 @@
 
 ## Features
 
-- 🔎 Search by GitHub username
-- 📊 Retrieve and display user data:
+- Search by GitHub username
+- Retrieve and display user data:
   - Number of repositories
   - Number of followers / following
   - Most active repositories
   - Commit distribution over time
   - Programming language usage breakdown
-- 📈 Text-based statistics and summaries rendered via server-side templates
+- Text-based statistics and summaries rendered via server-side templates
 
 ---
 
